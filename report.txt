@@ -2,58 +2,24 @@
 .............................
 Nätverksrapport - TechCorp AB
 .............................
+Rapportdatum: 2025-10-01 15:31
+Datauppdatering: 2024-09-30T10:30:00
 
-Huvudkontor
-...............
- SW-CORE-01
- SW-CORE-02
- SW-DIST-01
- SW-DIST-02
- SW-ACCESS-03
- SW-ACCESS-04
- SW-ACCESS-05
- RT-EDGE-01
- RT-EDGE-02
- AP-FLOOR1-01
- AP-FLOOR1-02
- AP-FLOOR2-01
- AP-FLOOR2-02
- AP-FLOOR3-01
- FW-DMZ-01
+EXECUTIVE SUMMARY
+.................
+⚠ KRITISKT: 2 enheter offline
+⚠ VARNING: 3 enheter med varningsstatus
+⚠ 9 enheter med låg uptime (<30 dagar) – kan indikera instabilitet
+⚠ 31 switchar har hög portanvändning (>80%)
 
-Lager
-...............
- SW-LAGER-01
- SW-LAGER-02
- RT-LAGER-01
- AP-LAGER-01
- AP-LAGER-02
+ENHETER MED PROBLEM
+...................
 
-Kontor Malmö
-...............
- SW-MAL-CORE-01
- SW-MAL-ACC-01
- SW-MAL-ACC-02
- RT-MAL-01
- AP-MAL-01
- AP-MAL-02
- FW-MAL-01
+Status: OFFLINE
+SW-ACCESS-03  192.168.1.5  switch  Huvudkontor
+AP-LAGER-02  192.168.200.102  access_point  Lager
 
-Datacenter
-...............
- SW-DC-CORE-01
- SW-DC-CORE-02
- SW-DC-TOR-01
- SW-DC-TOR-02
- SW-DC-TOR-03
- RT-DC-EDGE-01
- FW-DC-01
- FW-DC-02
- LB-DC-01
- LB-DC-02
-
-Säkerhetskopia
-...............
- SW-DR-01
- RT-DR-01
- FW-DR-01
+Status: Warning
+AP-FLOOR2-02  192.168.20.102  access_point  Huvudkontor (45 anslutna klienter!)
+RT-LAGER-01  192.168.2.254  router  Lager (uptime: 2 dagar)
+SW-DC-TOR-02  10.0.1.2  switch  Datacenter (uptime: 5 dagar)
