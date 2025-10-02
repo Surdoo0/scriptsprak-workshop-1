@@ -2,7 +2,7 @@
 .............................
 Nätverksrapport - TechCorp AB
 .............................
-Rapportdatum: 2025-10-02 09:43
+Rapportdatum: 2025-10-02 10:32
 Datauppdatering: 2024-09-30T10:30:00
 
 EXECUTIVE SUMMARY
@@ -15,10 +15,22 @@ EXECUTIVE SUMMARY
 ENHETER MED PROBLEM
 ...................
 Status: OFFLINE
-SW-ACCESS-03  192.168.1.5  switch  Huvudkontor
-AP-LAGER-02  192.168.200.102  access_point  Lager
+SW-ACCESS-03    192.168.1.5       Switch         Huvudkontor    
+AP-LAGER-02     192.168.200.102   Access Point   Lager          
 
 Status: Warning
-RT-LAGER-01  192.168.2.254  router  Lager (uptime: 2 dagar)
-SW-DC-TOR-02  10.0.1.2  switch  Datacenter (uptime: 5 dagar)
-AP-FLOOR2-02  192.168.20.102  access_point  Huvudkontor (45 anslutna klienter!)
+RT-LAGER-01     192.168.2.254     Router         Lager           (uptime: 2 dagar)
+SW-DC-TOR-02    10.0.1.2          Switch         Datacenter      (uptime: 5 dagar)
+AP-FLOOR2-02    192.168.20.102    Access Point   Huvudkontor     (45 anslutna klienter!)
+
+ENHETER MED LÅG UPTIME (<30 dagar)
+..................................
+AP-LAGER-02     0 dagar   Lager               ⚠ KRITISKT  
+SW-ACCESS-03    0 dagar   Huvudkontor         ⚠ KRITISKT  
+AP-FLOOR2-02    2 dagar   Huvudkontor         ⚠ KRITISKT  
+RT-LAGER-01     2 dagar   Lager               ⚠ KRITISKT  
+SW-DC-TOR-02    5 dagar   Datacenter                      
+SW-MAL-ACC-02   8 dagar   Kontor Malmö                    
+AP-FLOOR2-01    12 dagar  Huvudkontor                     
+SW-ACCESS-05    15 dagar  Huvudkontor                     
+SW-LAGER-02     23 dagar  Lager                           
