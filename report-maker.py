@@ -7,18 +7,43 @@ data = json.load(open("network_devices.json", "r",encoding = "utf-8"))
 
 # Create a variable that holds our whole text report
 report = ""
-report += "\n.............................\n" 
-report += "Nätverksrapport - TechCorp AB\n.............................\n"
 
-# Dates & time
-report_date = datetime.now().strftime("%Y-%m-%d %H:%M")
-try:
-    last_updated_dt = datetime.fromisoformat(data.get("last_updated"))
-    last_updated_str = last_updated_dt.strftime("%Y-%m-%dT%H:%M:%S")
-except Exception:
-    last_updated_str = str(data.get("last_updated") or "-")
-report += f"Rapportdatum: {report_date}\n"
-report += f"Datauppdatering: {last_updated_str}\n"
+# Header and dates reads from JSON data
+
+WIDTH = 66 # total line width for centrering; tweak to match your layout
+
+def hr (ch="=", widht=WIDTH):
+    # Return a horizontal rule line of given char and width
+    return ch * widht
+
+def iso_to_str(value):
+    #Parses ISO8601 string safely and returns "YYYY-MM-DDTHH:MM:SS"
+    if not value:
+        return "-"
+    try:
+        #Handle trailing 'Z' (UTC) if present
+        value = value.raplace("Z", "+00:00")
+        dt = datetime.fromisoformat(value)
+        return dt.strftime("%Y-%m-%dT%H:%M:%S")
+    except Exception:
+        return str(value)
+    
+company = str(data.get("company", "-"))
+title   = f"NÄTVERKSRAPPORT - {company}"
+
+# Build header block
+report += hr("=") + "\n"
+report += title.center(WIDTH) + "\n"
+report += hr("=") + "\n"
+
+# Dates
+report_date_str   = datetime.now().strftime("%Y-%m-%d %H:%M")
+last_updated_str  = iso_to_str(data.get("last_updated"))
+
+# Left-align labels to same width so colons line up
+LABEL_W = 16
+report += f"{'Rapportdatum:':<{LABEL_W}} {report_date_str}\n"
+report += f"{'Datauppdatering:':<{LABEL_W}} {last_updated_str}\n"
 
 # Executive summary header
 report += "\nEXECUTIVE SUMMARY\n"
@@ -213,7 +238,94 @@ offline_percent = (total_offline / total_devices * 100) if total_devices else 0
 report += "--------------------------------------\n"
 report += f"TOTALT: {total_devices} enheter ({total_offline} offline = {offline_percent:.1f}% offline)\n"
 report += ""
-        
+
+report += "\nPORTANDVÄNDNING SWITCHAR\n"
+report += "........................\n"
+
+# Column widths
+PU_COL_SITE     = 22    # site name
+PU_COL_COUNT    = 12    # switch count
+PU_COL_USED     = 15    # used/total 
+PU_COL_PCT      = 12    # utilization %
+PU_COL_FLAG     = 12    # warning/critical flag
+
+# Thresholds
+WARN_THRESHOLD = 0.80 # 80% => warning
+CRIT_THRESHOLD = 0.95 # 95% => critical
+
+# Collector per site
+site_stats = {} # { site: {"switches": n, "used": x, "total": y} }
+total_used = 0
+total_total = 0
+
+for location in data.get("locations", []):
+    site = location.get("site", "-")
+    for dev in location.get("devices", []):
+        dtype = str(dev.get("type", "")).lower()
+        if dtype == "switch":
+            ports = dev.get("ports") or {}
+            used = ports.get("used", 0) or 0
+            total = ports.get("total", 0) or 0
+
+            if site not in site_stats:
+                site_stats[site] = {"switches": 0, "used": 0, "total": 0}
+            
+            site_stats[site]["switches"] += 1
+            site_stats[site]["used"] += used
+            site_stats[site]["total"] += total
+
+            total_used += used
+            total_total += total
+
+# Sort sites by name (change key to sort by utilization instead if you want)
+sorted_sites = sorted(
+    site_stats.items(),
+    key=lambda kv: (kv[1]['used'] / kv[1]['total']) if kv[1]['total'] else 0.0,
+    reverse=True
+)
+
+# Header row (optional)
+report += (
+    f"{'Site':<{PU_COL_SITE}}"
+    f"{'Switchar':<{PU_COL_COUNT}}"
+    f"{'Använt/Totalt':<{PU_COL_USED}}"
+    f"{'Användning':<{PU_COL_PCT}}"
+    f"{'':<{PU_COL_FLAG}}\n"
+)
+
+
+# Render per-site rows
+for site, stats in sorted_sites:
+    used = stats["used"]
+    total = stats["total"]
+    pct = (used / total) if total else 0.0
+
+    # Flag selection
+    flag = ""
+    if pct >= CRIT_THRESHOLD:
+        flag = "⚠ KRITISKT!"
+    elif pct >= WARN_THRESHOLD:
+        flag = "⚠ KRITISKT!"
+
+    report += (
+        f"{site:<{PU_COL_SITE}}"
+        f"{(str(stats['switches']) + ' st'):<{PU_COL_COUNT}}"
+        f"{(str(used) + '/' + str(total)):<{PU_COL_USED}}"
+        f"{(f'{pct*100:.1f}%'):<{PU_COL_PCT}}"
+        f"{flag:<{PU_COL_FLAG}}\n"
+    )
+
+# Totals row aligned under "Använt/Totalt"
+tot_pct = (total_used / total_total) if total_total else 0.0
+report += "\n"
+report += (
+    f"{'Totalt:':<{PU_COL_SITE + PU_COL_COUNT}}"
+    f"{(str(total_used) + '/' + str(total_total) + ' portar används'):<{PU_COL_USED}}"
+    f"{(f'({tot_pct*100:.1f}%).'):<{PU_COL_PCT}}\n"
+)
+
+            
+
 # write the report to text file
 with open('report.txt', 'w', encoding='utf-8') as f:
     f.write(report)
