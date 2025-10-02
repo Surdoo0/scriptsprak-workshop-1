@@ -17,7 +17,7 @@ def hr (ch="=", widht=WIDTH):
     return ch * widht
 
 def iso_to_str(value):
-    #Parses ISO8601 string safely and returns "YYYY-MM-DDTHH:MM:SS"
+    # Parses ISO8601 string safely and returns "YYYY-MM-DDTHH:MM:SS"
     if not value:
         return "-"
     try:
