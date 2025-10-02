@@ -175,6 +175,44 @@ for device, location in low_uptime_list:
     critical = days < CRIT_THRESHOLD
     line = fmt_low_uptime_line(device.get("hostname", "-"), days, location.get("site", "-"), critical)
     report += line + "\n"
+
+report += "\nSTATISTIK PER ENHETSTYP\n"
+report += ".......................\n"
+
+device_stats = {} # dict to hold counts
+
+total_devices = 0
+total_offline = 0
+
+for location in data.get("locations", []):
+    for device in location.get("devices", []):
+        dtype = str(device.get("type", "")).replace("_", " ").title()
+
+        # Initialize dict entre if not exists
+        if dtype not in device_stats:
+            device_stats[dtype] = {"total": 0, "offline": 0}
+
+        # Update counters
+        device_stats[dtype]["total"] += 1
+        total_devices += 1
+
+        if str(device.get("status", "")).lower() == "offline":
+            device_stats[dtype]["offline"] += 1
+            total_offline += 1
+
+# Print statistics with aligned columns
+for dtype, stats in device_stats.items():
+    report += (
+        f"{dtype:<15}"            # device type, left aligned
+        f"{stats['total']:>3} st   "  # total, right aligned in 3 spaces
+        f"({stats['offline']} offline)\n"
+    )
+
+# Summary line
+offline_percent = (total_offline / total_devices * 100) if total_devices else 0
+report += "--------------------------------------\n"
+report += f"TOTALT: {total_devices} enheter ({total_offline} offline = {offline_percent:.1f}% offline)\n"
+report += ""
         
 # write the report to text file
 with open('report.txt', 'w', encoding='utf-8') as f:
