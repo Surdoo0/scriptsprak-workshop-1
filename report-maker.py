@@ -59,16 +59,34 @@ report += f"⚠ {high_port_util_switches} switchar har hög portanvändning (>80
 report += "\nENHETER MED PROBLEM\n"
 report += "...................\n"
 
+# --- Column widths for aligned output ---
+COL_HOST = 16
+COL_IP = 18
+COL_TYPE = 15
+COL_SITE = 15
+
+def fmt_type(t: str) -> str:
+    # Pretty print: "access_point" -> "Access Point"
+    return str(t or "").replace("_", " ").title()
+
+def fmt_line(host, ip, dtype, site):
+    return (
+         f"{host:<{COL_HOST}}"
+        f"{ip:<{COL_IP}}"
+        f"{dtype:<{COL_TYPE}}"
+        f"{site:<{COL_SITE}}"
+    )
+
 report += "Status: OFFLINE\n"
 
 for location in data["locations"]:
     for device in location["devices"]:
         if device["status"] == "offline":
-            line = (
-                device["hostname"] + "  "
-                + device["ip_address"] + "  "
-                + device["type"] + "  "
-                + location["site"]
+            line = fmt_line(
+                device["hostname"],
+                device["ip_address"],
+                fmt_type(device["type"]),
+                location["site"],
             )
             report += line + "\n"
 
@@ -92,18 +110,19 @@ def sort_key(item):
 
 warning_devices.sort(key=sort_key)
 
-# --- Print in sorted order ---
+# Print in sorted order with aligned columns
 for location, device in warning_devices:
-    line = (
-        device["hostname"] + "  "
-        + device["ip_address"] + "  "
-        + device["type"] + "  "
-        + location["site"] 
+    line = fmt_line(
+        device["hostname"],
+        device["ip_address"],
+        fmt_type(device["type"]),
+        location["site"],
     )
 
      # Fetch any client value form connected_clients or clients
     clients = device.get("connected_clients", device.get("clients"))
-
+    dtype_norm = device.get("type", "").replace("_", " ").strip().lower()
+    
     # If it's an Access Point - show clients instead of uptime
     if device.get("type", "").replace("_", " ").strip().lower() == "access point" and clients is not None:
         line += f" ({clients} anslutna klienter!)"
@@ -114,7 +133,47 @@ for location, device in warning_devices:
     elif clients is not None:
         line += f" ({clients} anslutna klienter!)"
             
-            
+    report += line + "\n"
+
+report += "\nENHETER MED LÅG UPTIME (<30 dagar)\n"
+report += "..................................\n"
+
+# Column widths for aligned output
+LU_COL_HOST     = 16
+LU_COL_UPTIME   = 10
+LU_COL_SITE     = 20
+LU_COL_FLAG     = 12
+
+#Device with uptime les than this are marked as critical
+CRIT_THRESHOLD = 3
+
+def fmt_low_uptime_line(host, days, site, is_critical):
+    # Correct pluralization: 1 dag vs. 2 dagar
+    unit = "dag" if int(days) == 1 else "dagar"
+    flag = "⚠ KRITISKT" if is_critical else ""
+    return (
+        f"{host:<{LU_COL_HOST}}"
+        f"{(str(int(days)) + ' ' + unit):<{LU_COL_UPTIME}}"
+        f"{site:<{LU_COL_SITE}}"
+        f"{flag:<{LU_COL_FLAG}}"    
+    )
+
+# Collect all devices with uptime < 30 days
+low_uptime_list = []
+for location in data.get("locations", []):
+    for device in location.get("devices", []):
+        d = device.get("uptime_days") # <-- d is defined here
+        if isinstance(d, (int, float)) and d < 30:
+            low_uptime_list.append((device, location))
+
+# Sort by uptime (ascending), the by hostname
+low_uptime_list.sort(key=lambda x: (x[0].get("uptime_days", 999999), x[0].get("hostname", "")))
+
+# Render lines
+for device, location in low_uptime_list:
+    days = device.get("uptime_days", 0)
+    critical = days < CRIT_THRESHOLD
+    line = fmt_low_uptime_line(device.get("hostname", "-"), days, location.get("site", "-"), critical)
     report += line + "\n"
         
 # write the report to text file
