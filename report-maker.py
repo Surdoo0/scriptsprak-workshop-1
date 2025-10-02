@@ -46,9 +46,9 @@ for location in data.get("locations", []):
             ports = device.get("ports", {})
             total = ports.get("total")
             used = ports.get("used")
-        if isinstance  (total, int) and total and isinstance(used, int):
-            if used / total >= 0.80:
-                high_port_util_switches +=1
+            if isinstance  (total, int) and total and isinstance(used, int):
+                if used / total >= 0.80:
+                    high_port_util_switches +=1
 
 # --- Write the summary lines ---
 report += f"⚠ KRITISKT: {offline_count} enheter offline\n"
@@ -59,7 +59,7 @@ report += f"⚠ {high_port_util_switches} switchar har hög portanvändning (>80
 report += "\nENHETER MED PROBLEM\n"
 report += "...................\n"
 
-report += "\nStatus: OFFLINE\n"
+report += "Status: OFFLINE\n"
 
 for location in data["locations"]:
     for device in location["devices"]:
@@ -74,31 +74,48 @@ for location in data["locations"]:
 
 report += "\nStatus: Warning\n"
 
+warning_devices = []
+
 for location in data["locations"]:
     for device in location["devices"]:
         if device["status"] == "warning":
-            line = (
-                device["hostname"] + "  "
-                + device["ip_address"] + "  "
-                + device["type"] + "  "
-                + location["site"]
-            )
+            warning_devices.append((location, device))
 
-            # Fetch any client value form connected_clients or clients
-            clients = device.get("connected_clients", device.get("clients"))
+# --- Sort devices: router → switch → access_point ---
+type_priority = {"router": 0, "switch": 1, "access point": 2, "access_point": 2}
 
-            # If it's an Access Point - show clients instead of uptime
-            if device.get("type", "").replace("_", " ").strip().lower() == "access point" and clients is not None:
-                line += f" ({clients} anslutna klienter!)"
-            # Otherwise, show uptime if available
-            elif "uptime_days" in device and device["uptime_days"] is not None:
-                line += f" (uptime: {device['uptime_days']} dagar)"
-            # If it's not an AP but still have clients, show them
-            elif clients is not None:
-                line += f" ({clients} anslutna klienter!)"
+def sort_key(item):
+    loc, dev = item
+    dtype = str(dev.get("type", "")).lower().replace("_", " ").strip()
+    pri = type_priority.get(dtype, 99)
+    return (pri, dev.get("hostname", ""))
+
+warning_devices.sort(key=sort_key)
+
+# --- Print in sorted order ---
+for location, device in warning_devices:
+    line = (
+        device["hostname"] + "  "
+        + device["ip_address"] + "  "
+        + device["type"] + "  "
+        + location["site"] 
+    )
+
+     # Fetch any client value form connected_clients or clients
+    clients = device.get("connected_clients", device.get("clients"))
+
+    # If it's an Access Point - show clients instead of uptime
+    if device.get("type", "").replace("_", " ").strip().lower() == "access point" and clients is not None:
+        line += f" ({clients} anslutna klienter!)"
+    # Otherwise, show uptime if available
+    elif "uptime_days" in device and device["uptime_days"] is not None:
+        line += f" (uptime: {device['uptime_days']} dagar)"
+    # If it's not an AP but still have clients, show them
+    elif clients is not None:
+        line += f" ({clients} anslutna klienter!)"
             
             
-            report += line + "\n"
+    report += line + "\n"
         
 # write the report to text file
 with open('report.txt', 'w', encoding='utf-8') as f:
