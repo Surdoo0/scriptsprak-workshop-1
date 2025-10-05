@@ -1,7 +1,7 @@
 ==================================================================
                   NÄTVERKSRAPPORT - TechCorp AB                   
 ==================================================================
-Rapportdatum:    2025-10-02 15:33
+Rapportdatum:    2025-10-05 17:06
 Datauppdatering: 2024-09-30T10:30:00
 
 EXECUTIVE SUMMARY
@@ -54,3 +54,23 @@ Lager                 2 st        57/96          59.4%
 Säkerhetskopia        1 st        12/28          42.9%                   
 
 Totalt:                           541/676 portar används(80.0%).    
+
+SWITCHAR MED HÖG PORTANVÄNDNING (>80%)
+......................................
+SW-DC-TOR-01      48/48     100.0%  ⚠ FULLT!  
+SW-MAL-ACC-02     24/24     100.0%  ⚠ FULLT!  
+SW-DC-TOR-02      47/48     97.9%   ⚠         
+SW-ACCESS-05      23/24     95.8%   ⚠         
+SW-DC-CORE-01     46/48     95.8%   ⚠         
+SW-DC-CORE-02     46/48     95.8%   ⚠         
+SW-LAGER-02       45/48     93.8%   ⚠         
+SW-DC-TOR-03      44/48     91.7%   ⚠         
+SW-DIST-02        22/24     91.7%   ⚠         
+SW-CORE-01        42/48     87.5%   ⚠         
+SW-MAL-ACC-01     20/24     83.3%   ⚠         
+
+VLAN-ÖVERSIKT
+.............
+Totalt antal unika VLANs i nätverket: 19 st
+VLANs: 10, 20, 30, 40, 50, 100, 110, 120, 200, 300
+       400, 500, 600, 700, 800, 900, 1000, 2000, 2100
