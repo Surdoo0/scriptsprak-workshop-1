@@ -324,7 +324,96 @@ report += (
     f"{(f'({tot_pct*100:.1f}%).'):<{PU_COL_PCT}}\n"
 )
 
-            
+report += "\nSWITCHAR MED HÖG PORTANVÄNDNING (>80%)\n"
+report += "......................................\n"
+
+# Column widths (adjuts if you want tigher/wider columns)
+HU_COL_HOST = 18    # hostname
+HU_COL_USED = 10    # "used/total"
+HU_COL_PCT  = 8     # "95.8%"
+HU_COL_FLAG = 10    # "⚠", "⚠ FULLT!"
+
+# Thresholds
+HIGH_THRESHOLD = 0.80   # 80%
+# (100% handled separately as "FULLT!")
+
+high_list = []  # will store tuples: (hotname, used, total, pct_float)
+
+# Collect switches and compute utiliation
+for location in data.get("locations", []):
+    for dev in location.get("devices", []):
+        dtype = str(dev.get("type", "")).lower().replace("_", " ").strip()
+        if dtype == "switch":
+            ports = dev.get("ports") or {}
+            used = int(ports.get("used") or 0)
+            total = int(ports.get("total") or 0)
+            if total <= 0:
+                continue # skip invalid totals
+
+            pct = used/total
+            if pct >= HIGH_THRESHOLD:
+                    high_list.append((dev.get("hostname", "-"), used, total, pct))
+
+# Sort by utilization desc, then hostname asc
+high_list.sort(key=lambda x: (-x[3], x[0]))
+
+# Render rows
+for host, used, total, pct in high_list:
+    # Pick flag: FULLT! if 100%, otherwise generic warning
+    if used == total and total > 0:
+        flag = "⚠ FULLT!"
+    else:
+        flag = "⚠"
+    
+    report += (
+        f"{host:<{HU_COL_HOST}}"
+        f"{(str(used) + '/' + str(total)):<{HU_COL_USED}}"
+        f"{(f'{pct*100:.1f}%'):<{HU_COL_PCT}}"
+        f"{flag:<{HU_COL_FLAG}}\n"
+    )
+
+# If none matched, show a friendly line
+if not high_list:
+    report += "Inga switchar över 80% portanvändning. \n"
+
+report += "\nVLAN-ÖVERSIKT\n"
+report += ".............\n"
+
+# Collect all VLAN IDs into a set
+all_vlans = set()
+devices_with_vlans = 0 # debug counter
+
+for location in data.get("locations", []):
+    for device in location.get("devices", []):
+        vlist = device.get("vlans")  # may be None or a list
+        if isinstance(vlist, list) and vlist:
+            devices_with_vlans += 1
+            for v in vlist:
+                try:
+                    all_vlans.add(int(v))  # accept ints or strings
+                except Exception:
+                    # ignore values that cannot be parsed as int
+                    pass
+
+sorted_vlans = sorted(all_vlans)
+
+report += f"Totalt antal unika VLANs i nätverket: {len(sorted_vlans)} st\n"
+
+# Pretty-print with wrapping (10 per line)
+prefix = "VLANs: "
+indent = " " * len(prefix)
+per_line = 10
+if sorted_vlans:
+    for i in range(0, len(sorted_vlans), per_line):
+        chunk = sorted_vlans[i:i+per_line]
+        report += (prefix if i == 0 else indent) + ", ".join(map(str, chunk)) + "\n"
+else:
+    report += "VLANs: (inga funna)\n"
+
+# Optional debug line if you still see 0:
+# report += f"(DEBUG) devices_with_vlans={d
+
+
 
 # write the report to text file
 with open('report.txt', 'w', encoding='utf-8') as f:
