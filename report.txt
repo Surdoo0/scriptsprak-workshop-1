@@ -1,7 +1,7 @@
 ==================================================================
                   NÄTVERKSRAPPORT - TechCorp AB                   
 ==================================================================
-Rapportdatum:    2025-10-06 14:52
+Rapportdatum:    2025-10-06 14:56
 Datauppdatering: 2024-09-30T10:30:00
 
 EXECUTIVE SUMMARY
@@ -104,7 +104,6 @@ Högst belastning:
   AP-FLOOR3-01         31 klienter
   AP-MAL-01            28 klienter
   AP-FLOOR1-02         25 klienter
-  AP-FLOOR2-01         23 klienter
 
 REKOMMENDATIONER
 .................
