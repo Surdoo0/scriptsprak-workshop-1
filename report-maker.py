@@ -463,7 +463,7 @@ col_width_clients = 4
 overload_threshold = 40
 
 # Number of top entries to show
-top_entries_to_show = 4
+top_entries_to_show = 5 
 
 # Write the result lines
 for hostname, number_of_clients in access_points[:top_entries_to_show]:
