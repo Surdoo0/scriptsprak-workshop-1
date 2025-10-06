@@ -1,6 +1,6 @@
-# Load the json module for reading and writing JSON
-import json
-from datetime import datetime
+import json     # Load the json module for reading and writing JSON
+from datetime import datetime       # Get the current date and time
+from collections import Counter     # Import Counter class for counting hashable objects
 
 # Open network_devices.json with UTF-8 encoding
 data = json.load(open("network_devices.json", "r",encoding = "utf-8")) 
@@ -413,6 +413,156 @@ else:
 # Optional debug line if you still see 0:
 # report += f"(DEBUG) devices_with_vlans={d
 
+report += "\nSTATISTIK PER SITE\n"
+report += "..................\n"
+
+for location in data.get("locations", []):
+    site = location.get("site", "-")
+    city = location.get("city", "-")
+    contact = location.get("contact", "-")
+    devices = location.get("devices", [])
+
+    # Count statuses using Counter ( a dict for tallies)
+    statuses = [str(d.get("status", "")).lower().strip() for d in devices]
+    counts = Counter(statuses)
+
+    total   = len(devices)
+    online  = counts.get("online", 0)
+    offline = counts.get("offline", 0)
+    warning = counts.get("warning", 0)
+
+    # Render block for this site
+    report += f"{site} ({city}):\n"
+    report += f"  Enheter: {total} ({online} online, {offline} offline, {warning} warning)\n"
+    report += f"  Kontakt: {contact}\n\n"
+
+report += "ACCESS POINTS - KLIENT ÖVERSIKT\n"
+report += "...............................\n"
+report += "Högst belastning:\n"
+
+access_points = []  # Collect all access points and their client counts from JSON data
+for location in data.get("locations", []):
+    for device in location.get("devices", []):
+        # Check if device type is an access point
+        device_type = str(device.get("type", "")).lower().strip()
+        if device_type == "access_point":
+            # Get number of conntected clients (if missing, set to 0)
+            number_of_clients = device.get("connected_clients", device.get("clients", 0))
+            if not isinstance(number_of_clients, int):
+                number_of_clients = 0
+            access_points.append((device.get("hostname", "-"), number_of_clients))
+
+# Sort access points by number of clients (highest first)
+access_points.sort(key=lambda element: element[1], reverse=True)
+
+# Column widths or nice formatting
+col_width_hostname = 18
+col_width_clients = 4
+
+# Threshold for marking an access point ac overloaded
+overload_threshold = 40
+
+# Number of top entries to show
+top_entries_to_show = 4
+
+# Write the result lines
+for hostname, number_of_clients in access_points[:top_entries_to_show]:
+    line = f"  {hostname:<{col_width_hostname}} {number_of_clients:>{col_width_clients}} klienter"
+    if number_of_clients >= overload_threshold:
+        line += "   ⚠ Överbelastad"
+    report += line + "\n"
+
+report += "\nREKOMMENDATIONER\n"
+report += ".................\n"
+
+# Helpers compute while scanning the JSON
+total_offline = 0
+low_uptime_devices = []     # device with upptime < 5 days
+site_switch_ports = {}      # site -> (used_ports_sum, total_ports_sum)
+site_vendors = {}           # site -> set of vendors
+top_ap = None               # (hostname, clients, status)
+
+# Scan all locations/devices once
+for location in data.get("locations", []):
+    site = location.get("site", "-")
+    site_switch_ports.setdefault(site, [0, 0])  # used, total
+    site_vendors.setdefault(site, set())
+
+    for dev in location.get("devices", []):
+        status = str(dev.get("status", "")).lower()
+        dtype = str(dev.get("type", "")).lower()
+        vendor = dev.get("vendor", "-")
+
+        # Count offline devices
+        if status == "offline":
+            total_offline += 1
+
+        # Track very low uptime devices
+        uptime = dev.get("uptime_days")
+        if isinstance(uptime, (int, float)) and uptime < 5:
+            low_uptime_devices.append(dev.get("hostename", "-"))
+        
+        # Aggregate switch port usage per site
+        if dtype == "switch":
+            ports = dev.get("ports") or {}
+            used = int(ports.get("used", 0))
+            total = int(ports.get("total", 0))
+            site_switch_ports[site][0] += used
+            site_switch_ports[site][1] += total
+
+        # Collect vendors per site
+        if vendor:
+            site_vendors[site].add(vendor)
+
+        # Track the most loaded access point
+        if dtype == "access_point":
+            clients = int(dev.get("connected_clients", dev.get("clients", 0)) or 0)
+            if not top_ap or clients > top_ap[1]:
+                top_ap = (dev.get("hostname", "-"), clients, status)
+
+# 1) Acute: offline devices
+if total_offline > 0:
+    report += f". AKUT: Undersök offline-enheter omgående ({total_offline} st)\n"
+
+# 2) Critical site port utilizaation (find highest and flag if very high)
+#    Call this for "extremely high" if >= 95%
+critical_site = None
+critical_pct = 0.0
+for site, (used_sum, total_sum) in site_switch_ports.items():
+    if total_sum > 0:
+        pct = 100.0 * used_sum / total_sum
+        if pct > critical_pct:
+            critical_pct = pct
+            critical_site = site
+
+if critical_site and critical_pct >= 95.0:
+    report += f". KRITISKT: {critical_site} har extremt hög portanvändning – planera expansion\n"
+
+# 3) Low uptime devices (show a generic recommendation if any exist)
+if low_uptime_devices:
+    report += ". Kontrollera enheter med låg uptime – särskilt de med <5 dagar\n"
+
+# 4) Hottest AP (warn if many clients or status=warning)
+if top_ap:
+    ap_name, ap_clients, ap_status = top_ap
+    # consider overloaded if status is 'warning' OR clients >= 40 (adjust threshold if you like)
+    overloaded = (ap_status == "warning") or (ap_clients >= 40)
+    if overloaded:
+        note = "warning" if ap_status == "warning" else "hög belastning"
+        report += f". {ap_name} har {ap_clients} anslutna klienter ({note}) – överväg lastbalansering\n"
+
+# 5) Vendor standardization hint (if any site uses many vendors)
+for site, vendors in site_vendors.items():
+    if len(vendors) >= 3:  # tweak the threshold if you want
+        report += ". Överväg standardisering av vendorer per site för enklare underhåll\n"
+        break  # one line is enough for the whole report
+
+# -----------------------------
+# REPORT END
+# -----------------------------
+report += "\n" + "=" * 78 + "\n"
+report += " " * 30 + "RAPPORT SLUT\n"
+report += "=" * 78 + "\n"
 
 
 # write the report to text file
