@@ -319,10 +319,10 @@ for site, stats in sorted_sites:
 tot_pct = (total_used / total_total) if total_total else 0.0
 report += "\n"
 report += (
-    f"{'Totalt:':<{PU_COL_SITE + PU_COL_COUNT}}"
-    f"{(str(total_used) + '/' + str(total_total) + ' portar används'):<{PU_COL_USED}}"
-    f"{(f'({tot_pct*100:.1f}%).'):<{PU_COL_PCT}}\n"
+    f"{'Total:':<{PU_COL_SITE}}"   # stays in the Site column
+    f"{(str(total_used) + '/' + str(total_total) + ' ports used (' + f'{tot_pct*100:.1f}%' + ')'):<{PU_COL_COUNT + PU_COL_USED + PU_COL_PCT}}\n"
 )
+
 
 report += "\nSWITCHAR MED HÖG PORTANVÄNDNING (>80%)\n"
 report += "......................................\n"
