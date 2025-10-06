@@ -1,7 +1,7 @@
 ==================================================================
                   NÄTVERKSRAPPORT - TechCorp AB                   
 ==================================================================
-Rapportdatum:    2025-10-05 17:06
+Rapportdatum:    2025-10-06 14:18
 Datauppdatering: 2024-09-30T10:30:00
 
 EXECUTIVE SUMMARY
@@ -74,3 +74,45 @@ VLAN-ÖVERSIKT
 Totalt antal unika VLANs i nätverket: 19 st
 VLANs: 10, 20, 30, 40, 50, 100, 110, 120, 200, 300
        400, 500, 600, 700, 800, 900, 1000, 2000, 2100
+
+STATISTIK PER SITE
+..................
+Huvudkontor (Stockholm):
+  Enheter: 15 (13 online, 1 offline, 1 warning)
+  Kontakt: Anna Andersson
+
+Lager (Göteborg):
+  Enheter: 5 (3 online, 1 offline, 1 warning)
+  Kontakt: Björn Björnsson
+
+Kontor Malmö (Malmö):
+  Enheter: 7 (7 online, 0 offline, 0 warning)
+  Kontakt: Cecilia Carlsson
+
+Datacenter (Stockholm):
+  Enheter: 10 (9 online, 0 offline, 1 warning)
+  Kontakt: David Davidsson
+
+Säkerhetskopia (Umeå):
+  Enheter: 3 (3 online, 0 offline, 0 warning)
+  Kontakt: Erik Eriksson
+
+ACCESS POINTS - KLIENT ÖVERSIKT
+...............................
+Högst belastning:
+  AP-FLOOR2-02         45 klienter   ⚠ Överbelastad
+  AP-FLOOR3-01         31 klienter
+  AP-MAL-01            28 klienter
+  AP-FLOOR1-02         25 klienter
+
+REKOMMENDATIONER
+.................
+. AKUT: Undersök offline-enheter omgående (2 st)
+. KRITISKT: Datacenter har extremt hög portanvändning – planera expansion
+. Kontrollera enheter med låg uptime – särskilt de med <5 dagar
+. AP-FLOOR2-02 har 45 anslutna klienter (warning) – överväg lastbalansering
+. Överväg standardisering av vendorer per site för enklare underhåll
+
+==============================================================================
+                              RAPPORT SLUT
+==============================================================================
