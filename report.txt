@@ -1,7 +1,7 @@
 ==================================================================
                   NÄTVERKSRAPPORT - TechCorp AB                   
 ==================================================================
-Rapportdatum:    2025-10-06 14:18
+Rapportdatum:    2025-10-06 14:36
 Datauppdatering: 2024-09-30T10:30:00
 
 EXECUTIVE SUMMARY
@@ -53,7 +53,7 @@ Huvudkontor           7 st        162/216        75.0%
 Lager                 2 st        57/96          59.4%                   
 Säkerhetskopia        1 st        12/28          42.9%                   
 
-Totalt:                           541/676 portar används(80.0%).    
+Total:                541/676 ports used (80.0%)             
 
 SWITCHAR MED HÖG PORTANVÄNDNING (>80%)
 ......................................
